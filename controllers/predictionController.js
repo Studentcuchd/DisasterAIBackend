@@ -8,6 +8,8 @@ const { buildFeatures } = require('../utils/buildFeatures');
 
 const predict = async (req, res, next) => {
   try {
+    console.log('📍 Prediction request received:', { latitude: req.body.latitude, longitude: req.body.longitude });
+    
     const {
       latitude,
       longitude,
@@ -28,9 +30,15 @@ const predict = async (req, res, next) => {
       return res.status(StatusCodes.BAD_REQUEST).json({ message: 'latitude and longitude are required numbers' });
     }
 
+    console.log('🌤️ Fetching weather data...');
     const weather = await fetchWeather(latitude, longitude);
+    console.log('✅ Weather data received');
+    
+    console.log('🌍 Fetching seismic data...');
     const seismic = await fetchRecentEarthquake(latitude, longitude);
+    console.log('✅ Seismic data received');
 
+    console.log('🔧 Building feature payload...');
     const featurePayload = buildFeatures({
       weather,
       seismic,

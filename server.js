@@ -73,9 +73,18 @@ app.use((req, res) => {
 // Global error handler
 app.use((err, req, res, next) => {
   // eslint-disable-next-line no-console
-  console.error('Unhandled error:', err);
+  console.error('❌ Unhandled error:', {
+    message: err.message,
+    status: err.status,
+    stack: err.stack,
+    path: req.path,
+    method: req.method,
+  });
   const status = err.status || StatusCodes.INTERNAL_SERVER_ERROR;
-  res.status(status).json({ message: err.message || 'Something went wrong' });
+  res.status(status).json({ 
+    message: err.message || 'Something went wrong',
+    error: process.env.NODE_ENV === 'production' ? undefined : err.message,
+  });
 });
 
 const PORT = process.env.PORT || 5000;
