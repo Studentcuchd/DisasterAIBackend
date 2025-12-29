@@ -15,10 +15,21 @@ dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
+
+// CORS configuration - normalize origins by removing trailing slashes
+const allowedOrigins = (process.env.CLIENT_ORIGIN || '*').split(',').map(origin => origin.trim().replace(/\/$/, ''));
+
 const io = require('socket.io')(server, {
   cors: {
-    origin: process.env.CLIENT_ORIGIN || '*',
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes('*') || allowedOrigins.includes(origin) || allowedOrigins.includes(origin.replace(/\/$/, ''))) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     methods: ['GET', 'POST'],
+    credentials: true,
   },
 });
 
@@ -32,7 +43,16 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(cors({ origin: process.env.CLIENT_ORIGIN || '*', credentials: true }));
+app.use(cors({ 
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes('*') || allowedOrigins.includes(origin) || allowedOrigins.includes(origin.replace(/\/$/, ''))) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true 
+}));
 app.use(helmet());
 app.use(express.json());
 app.use(morgan('dev'));
