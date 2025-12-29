@@ -10,6 +10,8 @@ const predictRisk = async (payload, retryCount = 0) => {
   
   try {
     console.log(`[ML Service] Sending prediction request (Attempt ${retryCount + 1}/${MAX_RETRIES})`);
+    console.log(`[ML Service] URL: ${url}`);
+    console.log(`[ML Service] Payload:`, JSON.stringify(payload, null, 2));
     
     const { data } = await axios.post(url, payload, {
       timeout: TIMEOUT,
@@ -18,10 +20,16 @@ const predictRisk = async (payload, retryCount = 0) => {
     
     const duration = Date.now() - startTime;
     console.log(`[ML Service] Prediction successful in ${duration}ms`);
+    console.log(`[ML Service] Response:`, JSON.stringify(data, null, 2));
     return data;
   } catch (error) {
     const duration = Date.now() - startTime;
     console.error(`[ML Service] Error after ${duration}ms (Attempt ${retryCount + 1}/${MAX_RETRIES}):`, error.message);
+    console.error(`[ML Service] Error details:`, {
+      code: error.code,
+      response: error.response?.data,
+      status: error.response?.status,
+    });
     
     // Retry logic for timeout and network errors
     if (retryCount < MAX_RETRIES - 1 && (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT' || error.message.includes('timeout'))) {
