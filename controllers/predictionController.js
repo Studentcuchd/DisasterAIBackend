@@ -60,14 +60,24 @@ const predict = async (req, res, next) => {
 
     const mlResponse = await predictRisk(featurePayload);
 
+    // Normalize risk_level to match enum values (Low, Medium, High)
+    const normalizedRiskLevel = mlResponse.risk_level 
+      ? mlResponse.risk_level.charAt(0).toUpperCase() + mlResponse.risk_level.slice(1).toLowerCase()
+      : 'Low';
+    
+    console.log(`📊 ML Response risk_level: "${mlResponse.risk_level}" → normalized to: "${normalizedRiskLevel}"`);
+
     const predictionDoc = await Prediction.create({
       location: { name: locationName, latitude, longitude },
       weatherSnapshot: weather,
       modelRequest: featurePayload,
-      modelResponse: mlResponse,
+      modelResponse: {
+        ...mlResponse,
+        risk_level: normalizedRiskLevel, // Use normalized value
+      },
     });
 
-    const alert = await createAlertIfNeeded({ predictionDoc, riskLevel: mlResponse.risk_level, io: req.io });
+    const alert = await createAlertIfNeeded({ predictionDoc, riskLevel: normalizedRiskLevel, io: req.io });
 
     const statusCode = mlResponse.fallback ? StatusCodes.ACCEPTED : StatusCodes.OK;
     res.status(statusCode).json({

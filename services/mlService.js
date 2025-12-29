@@ -34,9 +34,9 @@ const predictRisk = async (payload, retryCount = 0) => {
     // Fallback response for external service failures
     console.warn('[ML Service] ML prediction failed, using fallback response');
     return {
-      risk_level: 'medium',
-      flood_risk: 0.5,
-      earthquake_risk: 0.3,
+      risk_level: 'Medium',  // Capitalized to match enum
+      confidence: 0.5,
+      probabilities: { Low: 0.3, Medium: 0.5, High: 0.2 },
       fallback: true,
       error: error.message
     };
