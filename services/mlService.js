@@ -6,10 +6,10 @@ const TIMEOUT = 30000; // 30 seconds - increased from 15s for external service
 
 const predictRisk = async (payload, retryCount = 0) => {
   const url = process.env.ML_API_URL || 'https://hackathon-model.onrender.com/predict';
+  const startTime = Date.now();
   
   try {
     console.log(`[ML Service] Sending prediction request (Attempt ${retryCount + 1}/${MAX_RETRIES})`);
-    const startTime = Date.now();
     
     const { data } = await axios.post(url, payload, {
       timeout: TIMEOUT,
