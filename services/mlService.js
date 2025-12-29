@@ -1,8 +1,8 @@
 const axios = require('axios');
 
-const MAX_RETRIES = 3;
-const INITIAL_DELAY = 1000; // 1 second
-const TIMEOUT = 30000; // 30 seconds - increased from 15s for external service
+const MAX_RETRIES = 2;
+const INITIAL_DELAY = 2000; // 2 seconds
+const TIMEOUT = 90000; // 90 seconds - for Render cold starts (free tier sleeps)
 
 const predictRisk = async (payload, retryCount = 0) => {
   const url = process.env.ML_API_URL || 'https://hackathon-model.onrender.com/predict';
