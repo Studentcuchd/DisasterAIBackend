@@ -61,9 +61,14 @@ predict = async (req, res, next) => {
 
     const mlResponse = await predictRisk(featurePayload);
 
+    // Validate ML response
+    if (!mlResponse || typeof mlResponse !== 'object') {
+      throw new Error('Invalid ML service response');
+    }
+
     // Normalize risk_level to match enum values (Low, Medium, High)
     const normalizedRiskLevel = mlResponse.risk_level 
-      ? mlResponse.risk_level.charAt(0).toUpperCase() + mlResponse.risk_level.slice(1).toLowerCase()
+      ? String(mlResponse.risk_level).charAt(0).toUpperCase() + String(mlResponse.risk_level).slice(1).toLowerCase()
       : 'Low';
     
     console.log(`📊 ML Response risk_level: "${mlResponse.risk_level}" → normalized to: "${normalizedRiskLevel}"`);

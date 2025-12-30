@@ -1,4 +1,5 @@
 const axios = require('axios');
+const { StatusCodes } = require('http-status-codes');
 
 const MAX_RETRIES = 2;
 const INITIAL_DELAY = 2000; // 2 seconds
@@ -54,6 +55,7 @@ const predictRisk = async (payload, retryCount = 0) => {
     
     const err = new Error(error.message);
     err.details = errorDetails;
+    err.status = status || StatusCodes.INTERNAL_SERVER_ERROR;
     throw err;
   }
 };
