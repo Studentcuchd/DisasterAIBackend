@@ -31,23 +31,19 @@ const predictRisk = async (payload, retryCount = 0) => {
       status: error.response?.status,
     });
     
-    // Retry logic for timeout and network errors
-    if (retryCount < MAX_RETRIES - 1 && (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT' || error.message.includes('timeout'))) {
-      const delayMs = INITIAL_DELAY * Math.pow(2, retryCount); // Exponential backoff
-      console.log(`[ML Service] Retrying in ${delayMs}ms...`);
-      await new Promise(resolve => setTimeout(resolve, delayMs));
-      return predictRisk(payload, retryCount + 1);
-    }
-    
-    // Fallback response for external service failures
-    console.warn('[ML Service] ML prediction failed, using fallback response');
-    return {
-      risk_level: 'Medium',  // Capitalized to match enum
-      confidence: 0.5,
-      probabilities: { Low: 0.3, Medium: 0.5, High: 0.2 },
-      fallback: true,
-      error: error.message
+    // Create detailed error object with detection info
+    const errorDetails = {
+      type: error.response?.status ? 'HTTP_ERROR' : (error.code === 'ECONNABORTED' || error.message.includes('timeout') ? 'TIMEOUT' : 'NETWORK_ERROR'),
+      status: error.response?.status,
+      code: error.code,
+      message: error.message,
+      duration: duration,
+      attempt: retryCount + 1,
     };
+    
+    const err = new Error(error.message);
+    err.details = errorDetails;
+    throw err;
   }
 };
 

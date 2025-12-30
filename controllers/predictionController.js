@@ -6,7 +6,8 @@ const { predictRisk } = require('../services/mlService');
 const { createAlertIfNeeded } = require('../services/alertService');
 const { buildFeatures } = require('../utils/buildFeatures');
 
-const predict = async (req, res, next) => {
+const 
+predict = async (req, res, next) => {
   try {
     console.log('📍 Prediction request received:', { latitude: req.body.latitude, longitude: req.body.longitude });
     
@@ -79,13 +80,22 @@ const predict = async (req, res, next) => {
 
     const alert = await createAlertIfNeeded({ predictionDoc, riskLevel: normalizedRiskLevel, io: req.io });
 
-    const statusCode = mlResponse.fallback ? StatusCodes.ACCEPTED : StatusCodes.OK;
-    res.status(statusCode).json({
+    res.status(StatusCodes.OK).json({
       prediction: predictionDoc,
       alert,
-      warning: mlResponse.fallback ? 'Using fallback prediction due to ML service timeout' : undefined,
     });
   } catch (error) {
+    // Enhanced error detection and logging
+    if (error.details) {
+      console.error(`❌ ML Service Error Detected:`, {
+        type: error.details.type,
+        status: error.details.status,
+        code: error.details.code,
+        message: error.message,
+        duration: error.details.duration,
+        attempt: error.details.attempt,
+      });
+    }
     return next(error);
   }
 };
