@@ -24,17 +24,28 @@ const predictRisk = async (payload, retryCount = 0) => {
     return data;
   } catch (error) {
     const duration = Date.now() - startTime;
+    const status = error.response?.status;
+    const isRetryable = status === 502 || status === 503 || error.code === 'ECONNABORTED' || error.message.includes('timeout');
+    
     console.error(`[ML Service] Error after ${duration}ms (Attempt ${retryCount + 1}/${MAX_RETRIES}):`, error.message);
     console.error(`[ML Service] Error details:`, {
       code: error.code,
-      response: error.response?.data,
-      status: error.response?.status,
+      status: status,
+      isRetryable: isRetryable,
     });
+    
+    // Retry on 502/503 (server errors) or timeout errors
+    if (retryCount < MAX_RETRIES - 1 && isRetryable) {
+      const delayMs = INITIAL_DELAY * Math.pow(2, retryCount); // Exponential backoff
+      console.log(`[ML Service] Retrying in ${delayMs}ms... (Render cold start recovery)`);
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+      return predictRisk(payload, retryCount + 1);
+    }
     
     // Create detailed error object with detection info
     const errorDetails = {
-      type: error.response?.status ? 'HTTP_ERROR' : (error.code === 'ECONNABORTED' || error.message.includes('timeout') ? 'TIMEOUT' : 'NETWORK_ERROR'),
-      status: error.response?.status,
+      type: status ? `HTTP_ERROR_${status}` : (error.code === 'ECONNABORTED' || error.message.includes('timeout') ? 'TIMEOUT' : 'NETWORK_ERROR'),
+      status: status,
       code: error.code,
       message: error.message,
       duration: duration,
